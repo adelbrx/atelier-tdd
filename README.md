@@ -32,7 +32,21 @@ L'interface écoute sur `http://localhost:5173`. En développement, Vite relaie
 automatiquement les appels `/api` vers FastAPI. Pour un déploiement séparé,
 `VITE_API_BASE_URL` permet d'indiquer l'origine publique de l'API.
 
-## Vérifications
+## CI/CD
+
+Le workflow GitHub Actions est defini dans `.github/workflows/ci-cd.yml`.
+
+Il est lance automatiquement sur les pull requests et les push vers `main` ou `develop`. Il peut aussi etre lance manuellement depuis l'onglet Actions de GitHub.
+
+La pipeline verifie :
+
+- les tests unitaires backend avec `pytest` ;
+- les scenarios BDD Python avec `behave` ;
+- les scenarios BDD JavaScript avec `cucumber-js` ;
+- les tests frontend avec `vitest` ;
+- la compilation de l'interface React/Vite.
+
+## Verifications
 
 Depuis la racine du projet :
 
