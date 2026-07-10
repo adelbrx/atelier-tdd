@@ -17,3 +17,9 @@ from support.promotion_driver import PromotionDriver  # noqa: E402
 
 def before_scenario(context, _scenario) -> None:
     context.promotions = PromotionDriver()
+
+
+def after_scenario(context, scenario) -> None:
+    if scenario.status == "failed":
+        print(f"[KO] {scenario.name} — promotions : {getattr(context, 'promotions', None)}")
+
