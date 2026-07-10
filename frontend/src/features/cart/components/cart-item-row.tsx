@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/money";
 
 interface CartItemRowProps {
-  item: CartItem;
+  item: CartItem & { quantity: number };
+  onQuantityChange: (quantity: number) => void;
+  onRemove: () => void;
 }
 
-export function CartItemRow({ item }: CartItemRowProps) {
+export function CartItemRow({ item, onQuantityChange, onRemove }: CartItemRowProps) {
   return (
     <article className="flex items-center gap-4 p-5 sm:gap-5 sm:p-6">
       <div
@@ -27,12 +29,13 @@ export function CartItemRow({ item }: CartItemRowProps) {
             size="icon"
             className="size-8"
             aria-label={`Diminuer la quantité de ${item.name}`}
-            disabled
+            onClick={() => onQuantityChange(item.quantity - 1)}
+            disabled={item.quantity <= 1}
           >
             <Minus className="size-3" aria-hidden="true" />
           </Button>
-          <span className="w-8 text-center text-sm font-semibold" aria-label="Quantité 1">
-            1
+          <span className="w-8 text-center text-sm font-semibold" aria-label={`Quantité ${item.quantity}`}>
+            {item.quantity}
           </span>
           <Button
             type="button"
@@ -40,21 +43,21 @@ export function CartItemRow({ item }: CartItemRowProps) {
             size="icon"
             className="size-8"
             aria-label={`Augmenter la quantité de ${item.name}`}
-            disabled
+            onClick={() => onQuantityChange(item.quantity + 1)}
           >
             <Plus className="size-3" aria-hidden="true" />
           </Button>
         </div>
       </div>
       <div className="flex flex-col items-end gap-4">
-        <span className="font-bold tabular-nums">{formatCurrency(item.price)}</span>
+        <span className="font-bold tabular-nums">{formatCurrency(item.price * item.quantity)}</span>
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 text-muted-foreground"
+          className="size-8 text-muted-foreground hover:text-destructive"
           aria-label={`Supprimer ${item.name}`}
-          disabled
+          onClick={onRemove}
         >
           <Trash2 className="size-4" aria-hidden="true" />
         </Button>
@@ -62,3 +65,4 @@ export function CartItemRow({ item }: CartItemRowProps) {
     </article>
   );
 }
+
