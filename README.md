@@ -49,6 +49,20 @@ MICROSHOP_API_URL=http://127.0.0.1:8000 \
   python3 -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
+## Architecture frontend
+
+La fonctionnalité panier suit une organisation *feature-first* sous
+`frontend/src/features/cart` :
+
+- `components/` contient un composant métier par fichier ;
+- `hooks/` isole les appels asynchrones et l'état promotionnel ;
+- `types.ts` centralise les contrats internes de la fonctionnalité ;
+- `cart-items.ts` contient les données et leur sélection ;
+- `index.ts` expose uniquement l'API publique de la fonctionnalité.
+
+Les familles de primitives générées par shadcn/ui (`Card`, `Alert`, etc.) restent
+regroupées dans leur fichier d'origine, conformément à la convention shadcn.
+
 ## Décisions métier
 
 - les calculs backend utilisent `Decimal` et le total est plafonné à `0.00 €` ;

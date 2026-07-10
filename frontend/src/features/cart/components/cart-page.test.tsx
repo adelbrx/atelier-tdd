@@ -8,8 +8,8 @@ import {
   PromotionApiError,
   removePromotion,
 } from "@/api/promotions";
-import { CartPage } from "@/components/cart-page";
 import { ToastProvider } from "@/components/ui/toast";
+import { CartPage } from "@/features/cart/components/cart-page";
 import type { PromotionResult } from "@/types/promotion";
 
 vi.mock("@/api/promotions", async (importOriginal) => {
@@ -162,6 +162,19 @@ describe("gestion des codes promotionnels au panier", () => {
     expect(screen.queryByTestId("active-promotion")).not.toBeInTheDocument();
   });
 
+  it("refuse un code vide sans appeler l'API", async () => {
+    const user = userEvent.setup();
+    renderCart(50);
+
+    await user.click(screen.getByRole("button", { name: "Appliquer" }));
+
+    expect(applyPromotionMock).not.toHaveBeenCalled();
+    const alertTitle = await screen.findByText("Code non appliqué");
+    expect(alertTitle.closest("[role='alert']")).toHaveTextContent(
+      "Saisissez un code promotionnel.",
+    );
+  });
+
   it("conserve le code et les montants actifs quand le second code est expiré", async () => {
     applyPromotionMock
       .mockResolvedValueOnce(
@@ -242,5 +255,31 @@ describe("gestion des codes promotionnels au panier", () => {
       subtotal: "50.00",
       active_code: "BIENVENUE10",
     });
+  });
+
+  it("réinitialise la promotion quand le sous-total du panier change", async () => {
+    applyPromotionMock.mockResolvedValueOnce(
+      promotionResult({
+        discount: "5.00",
+        total: "45.00",
+        applied_code: "BIENVENUE10",
+      }),
+    );
+    const view = renderCart(50);
+
+    await submitCode("BIENVENUE10");
+    expect(await screen.findByTestId("active-promotion")).toHaveTextContent("BIENVENUE10");
+
+    view.rerender(
+      <ToastProvider>
+        <CartPage initialSubtotal={30} />
+      </ToastProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("active-promotion")).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId("order-total")).toHaveTextContent(/30,00\s*€/);
+    expect(screen.queryByTestId("discount-row")).not.toBeInTheDocument();
   });
 });

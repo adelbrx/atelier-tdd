@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, toSafeMoney } from "@/lib/money";
 import type { PromotionCatalogItem } from "@/types/promotion";
 
-const fallbackPromotions: PromotionCatalogItem[] = [
+const fallbackPromotions: readonly PromotionCatalogItem[] = [
   {
     code: "BIENVENUE10",
     aliases: [],
@@ -40,10 +40,15 @@ function promotionValue(promotion: PromotionCatalogItem): string {
       maximumFractionDigits: 2,
     })} %`;
   }
+
   return `−${formatCurrency(promotion.value)}`;
 }
 
-export function PromotionHelp({ promotions }: { promotions?: PromotionCatalogItem[] }) {
+interface PromotionHelpProps {
+  promotions?: readonly PromotionCatalogItem[];
+}
+
+export function PromotionHelp({ promotions }: PromotionHelpProps) {
   const items = promotions && promotions.length > 0 ? promotions : fallbackPromotions;
 
   return (
@@ -57,6 +62,7 @@ export function PromotionHelp({ promotions }: { promotions?: PromotionCatalogIte
       <CardContent className="space-y-3">
         {items.map((promotion, index) => {
           const Icon = index === 2 ? Gift : BadgePercent;
+
           return (
             <div
               key={promotion.code}
