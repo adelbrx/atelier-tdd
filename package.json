@@ -1,0 +1,13 @@
+{
+  "name": "behaviour-domain-development-cucumberjs",
+  "version": "1.0.0",
+  "description": "Atelier 3 - CucumberJS BDD tests",
+  "main": "index.js",
+  "scripts": {
+    "test:cucumber": "cucumber-js"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^10.9.0"
+  },
+  "type": "commonjs"
+}
