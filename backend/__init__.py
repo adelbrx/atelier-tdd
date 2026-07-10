@@ -1,0 +1,2 @@
+"""MicroShop backend package."""
+
