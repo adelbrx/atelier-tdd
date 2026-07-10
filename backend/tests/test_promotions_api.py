@@ -78,7 +78,7 @@ def test_valid_second_code_replaces_the_active_code(client: TestClient) -> None:
     response = client.post(
         "/api/promotions/apply",
         json={
-            "subtotal": "50.00",
+            "subtotal": "40.00",
             "code": "PROM05",
             "active_code": "BIENVENUE10",
         },
@@ -88,6 +88,8 @@ def test_valid_second_code_replaces_the_active_code(client: TestClient) -> None:
     body = response.json()
     assert body["applied_code"] == "PROMO05"
     assert body["replaced_code"] == "BIENVENUE10"
+    assert body["discount"] == "5.00"
+    assert body["total"] == "35.00"
     assert body["message"] == (
         "Le code promo PROMO05 a remplacé le code BIENVENUE10."
     )
@@ -127,7 +129,7 @@ def test_minimum_subtotal_is_enforced(
 
     assert response.status_code == 400
     assert response.json() == {
-        "detail": f"Ce code promo nécessite un sous-total minimum de {minimum} €."
+        "detail": f"Le montant minimum de {minimum} € n'est pas atteint"
     }
 
 

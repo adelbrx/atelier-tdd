@@ -162,6 +162,22 @@ describe("gestion des codes promotionnels au panier", () => {
     expect(screen.queryByTestId("active-promotion")).not.toBeInTheDocument();
   });
 
+  it("affiche le refus sous le seuil et conserve le total du panier", async () => {
+    applyPromotionMock.mockRejectedValueOnce(
+      new PromotionApiError("Le montant minimum de 20.00 € n'est pas atteint"),
+    );
+    renderCart(19.99);
+
+    await submitCode("BIENVENUE10");
+
+    const alert = await screen.findByText("Code non appliqué");
+    expect(alert.closest("[role='alert']")).toHaveTextContent(
+      "Le montant minimum de 20.00 € n'est pas atteint",
+    );
+    expect(screen.getByTestId("order-total")).toHaveTextContent(/19,99\s*€/);
+    expect(screen.queryByTestId("active-promotion")).not.toBeInTheDocument();
+  });
+
   it("refuse un code vide sans appeler l'API", async () => {
     const user = userEvent.setup();
     renderCart(50);

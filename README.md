@@ -34,19 +34,25 @@ automatiquement les appels `/api` vers FastAPI. Pour un déploiement séparé,
 
 ## Vérifications
 
+Depuis la racine du projet :
+
 ```bash
-(cd backend && pytest)
-(cd frontend && npm test)
-(cd frontend && npm run build)
+backend/.venv/bin/python -m behave
+backend/.venv/bin/python -m pytest backend/tests
+npm --prefix frontend test
+npm --prefix frontend run build
 ```
 
-Une spécification Gherkin étendue se trouve dans
-[`tests/features/cart_promo_codes.feature`](tests/features/cart_promo_codes.feature).
+La spécification [`cart_promo_codes.feature`](tests/features/cart_promo_codes.feature)
+est exécutable par Behave. Ses step definitions appellent l'API FastAPI, tandis
+que `backend/tests/test_promotion_service.py` constitue la boucle TDD interne sur
+le domaine. Cette séparation matérialise le workflow outside-in demandé.
+
 Le contrat HTTP peut aussi être vérifié contre l'API démarrée :
 
 ```bash
 MICROSHOP_API_URL=http://127.0.0.1:8000 \
-  python3 -m unittest discover -s tests -p 'test_*.py' -v
+  backend/.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
 ## Architecture frontend

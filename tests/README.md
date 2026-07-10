@@ -2,8 +2,28 @@
 
 La spécification exhaustive se trouve dans
 `features/cart_promo_codes.feature`. Elle couvre les scénarios fournis, l'alias
-`PROM05`, les seuils inclusifs, le remplacement sans cumul, la notification,
-la borne d'expiration et le plancher à la fois côté API et côté interface.
+`PROM05`, les seuils inclusifs, le remplacement sans cumul, la borne
+d'expiration et le plancher.
+
+## Boucle BDD externe
+
+Depuis la racine, Behave lit réellement le Gherkin puis exécute ses step
+definitions contre l'application FastAPI :
+
+```shell
+backend/.venv/bin/python -m behave
+```
+
+Les steps restent des adaptateurs minces : les règles de calcul ne sont pas
+recopiées dans `features/steps/promotion_steps.py`. Elles restent dans
+`PromotionService`, couvert séparément par la boucle TDD interne :
+
+```shell
+backend/.venv/bin/python -m pytest backend/tests/test_promotion_service.py -q
+```
+
+Les comportements purement visuels, notamment les toasts, sont couverts par
+Vitest dans la feature React plutôt que simulés artificiellement dans Behave.
 
 ## Contrat HTTP en boîte noire
 
@@ -13,13 +33,13 @@ implémentation conforme :
 
 ```shell
 MICROSHOP_API_URL=http://127.0.0.1:8000 \
-  python3 -m unittest discover -s tests -p 'test_*.py' -v
+  backend/.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
 Sans `MICROSHOP_API_URL`, seuls les tests HTTP sont explicitement ignorés au
 lieu de faire échouer une installation qui ne démarre pas de serveur.
 
-Les scénarios marqués `@horloge-controlee` exigent une horloge injectable : les
+Les scénarios marqués `@HorlogeControlee` exigent une horloge injectable : les
 trois codes du catalogue fonctionnel n'ont volontairement aucune date
 d'expiration, puisqu'aucune date n'est donnée par le besoin. Cette borne doit
 donc être vérifiée au niveau du service métier avec une promotion de test, sans

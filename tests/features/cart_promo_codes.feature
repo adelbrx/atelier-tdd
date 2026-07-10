@@ -1,94 +1,77 @@
+@Context:Panier @Component:Promotions
 Feature: Gestion des codes promotionnels au panier
-  Afin de payer le bon montant
-  En tant que client MicroShop
-  Je veux appliquer au plus un code promotionnel à mon panier
+  En tant que cliente de MicroShop
+  Je veux appliquer un code promo à mon panier
+  Afin de bénéficier d'une réduction immédiate sur mon achat
 
-  Rule: Les remises respectent leur seuil minimum, borne incluse
+  Background:
+    Given un catalogue de produits disponibles
+    And mon panier est initialement vide
 
-    Scenario Outline: Application réussie d'un code promo selon son seuil d'éligibilité
-      Given un panier avec un sous-total de <sous_total> €
-      When j'applique le code promo "<code_promo>"
-      Then le code actif est "<code_actif>"
-      And le total final de mon panier est de <total_final> €
+  @Nominal @Business @Seuils
+  Scenario Outline: Application réussie d'un code promo selon les seuils d'éligibilité
+    Given un panier avec un sous-total de <sous_total> €
+    When j'applique le code promo "<code_promo>"
+    Then le total final de mon panier est de <total_final> €
 
-      Examples:
-        | sous_total | code_promo  | code_actif   | total_final |
-        | 20.00      | BIENVENUE10 | BIENVENUE10  | 18.00       |
-        | 50.00      | BIENVENUE10 | BIENVENUE10  | 45.00       |
-        | 30.00      | PROMO05     | PROMO05      | 25.00       |
-        | 30.00      | PROM05      | PROMO05      | 25.00       |
+    Examples:
+      | sous_total | code_promo  | total_final |
+      | 20.00      | BIENVENUE10 | 18.00       |
+      | 50.00      | BIENVENUE10 | 45.00       |
+      | 30.00      | PROM05      | 25.00       |
 
-    Scenario Outline: Rejet juste sous le seuil minimum
-      Given un panier avec un sous-total de <sous_total> €
-      When j'applique le code promo "<code_promo>"
-      Then le code promo est refusé
-      And aucune remise n'est appliquée
-      And le total final de mon panier reste à <sous_total> €
+  @Alternative @UX @ErreurSeuil
+  Scenario: Refus d'un code promo si le seuil minimum d'achat n'est pas atteint
+    Given un panier avec un sous-total de 19.99 €
+    When j'applique le code promo "BIENVENUE10"
+    Then le code est refusé avec le message "Le montant minimum de 20.00 € n'est pas atteint"
+    And le total de mon panier reste de 19.99 €
 
-      Examples:
-        | sous_total | code_promo  |
-        | 19.99      | BIENVENUE10 |
-        | 29.99      | PROMO05     |
-        | 29.99      | PROM05      |
-        | 29.99      | CADEAU40    |
+  @Alternative @UX @ErreurExpiration
+  Scenario: Refus d'un code promo si la date de validité est dépassée
+    Given un panier avec un sous-total de 40.00 €
+    And le code promo "BIENVENUE10" est expiré depuis le jour J-1
+    When j'applique le code promo "BIENVENUE10"
+    Then le code est refusé avec le message "Ce code promo est expiré."
+    And le total de mon panier reste de 40.00 €
 
-  Rule: Le total final ne peut jamais être négatif
+  @Exceptions @Securite @Remplacement
+  Scenario: Saisie d'un second code valide entraînant le remplacement automatique du premier
+    Given un panier avec un sous-total de 40.00 €
+    And le code promo "BIENVENUE10" est déjà appliqué
+    When j'applique le code promo "PROM05"
+    Then le premier code est retiré au profit du nouveau code
+    And le seul code actif est "PROMO05"
+    And le total final de mon panier est de 35.00 €
+    And le message de remplacement est "Le code promo PROMO05 a remplacé le code BIENVENUE10."
 
-    @api
-    Scenario: Le backend plafonne une remise fixe à la valeur du panier
-      Given un panier avec un sous-total de 30.00 €
-      When j'applique le code promo "CADEAU40" d'une valeur de 40.00 €
-      Then la remise effective est de 30.00 €
-      And le total final de mon panier est de 0.00 €
-      And le montant retourné par l'API n'est pas négatif
+  @Alternative @Securite @NonCumul
+  Scenario: Un second code invalide conserve le code déjà actif
+    Given un panier avec un sous-total de 50.00 €
+    And le code promo "BIENVENUE10" est déjà appliqué
+    When j'applique le code promo "INCONNU"
+    Then le code promo est refusé
+    And le seul code actif reste "BIENVENUE10"
+    And le total de mon panier reste de 45.00 €
 
-    @ui
-    Scenario: Le frontend n'affiche jamais de montant négatif
-      Given un panier avec un sous-total de 30.00 €
-      When j'applique le code promo "CADEAU40"
-      Then le récapitulatif du panier affiche un total de "0,00 €"
-      And aucun montant négatif n'est affiché
+  @Exceptions @Securite-Plancher
+  Scenario: Application d'un code promo réduisant le montant au-delà de la valeur du panier
+    Given un panier avec un sous-total de 30.00 €
+    When j'applique un code promotionnel exceptionnel "CADEAU40" de valeur 40.00 €
+    Then le total final de mon panier est de 0.00 €
+    And le montant retourné n'est pas négatif
 
-  Rule: Un seul code promotionnel peut être actif
+  @HorlogeControlee @BorneExpiration
+  Scenario: Le code reste valide à la dernière seconde du jour J
+    Given un code promo éligible expirant le 10 juillet 2026
+    And l'horloge métier indique le 10 juillet 2026 à 23:59:59
+    When j'applique ce code promo
+    Then le code promo est accepté
 
-    @api @ui
-    Scenario Outline: Un second code valide remplace automatiquement le premier sans cumul
-      Given un panier avec un sous-total de 100.00 €
-      And le code promo "<ancien_code>" est actif
-      When j'applique le code promo "<nouveau_code>"
-      Then le seul code actif est "<code_actif>"
-      And le code remplacé est "<code_remplace>"
-      And le total final de mon panier est de <total_final> €
-      And une notification indique clairement le remplacement de "<code_remplace>" par "<code_actif>"
-
-      Examples:
-        | ancien_code | nouveau_code | code_actif  | code_remplace | total_final |
-        | PROMO05     | BIENVENUE10  | BIENVENUE10 | PROMO05       | 90.00       |
-        | BIENVENUE10 | PROMO05      | PROMO05     | BIENVENUE10   | 95.00       |
-        | PROM05      | BIENVENUE10  | BIENVENUE10 | PROMO05       | 90.00       |
-
-    @api @ui
-    Scenario: Un second code invalide ne désactive pas le code déjà actif
-      Given un panier avec un sous-total de 50.00 €
-      And le code promo "BIENVENUE10" est actif
-      When j'applique le code promo "INCONNU"
-      Then le code promo est refusé
-      And le seul code actif reste "BIENVENUE10"
-      And le total final de mon panier reste à 45.00 €
-
-  Rule: Un code reste valide jusqu'à 23:59:59 inclus le jour de son expiration
-
-    @horloge-controlee
-    Scenario: Le code est encore valide à la dernière seconde du jour J
-      Given un code promo éligible expirant le 10 juillet 2026
-      And l'horloge métier indique le 10 juillet 2026 à 23:59:59
-      When j'applique ce code promo
-      Then le code promo est accepté
-
-    @horloge-controlee
-    Scenario: Le code est expiré dès la première seconde du lendemain
-      Given un code promo éligible expirant le 10 juillet 2026
-      And l'horloge métier indique le 11 juillet 2026 à 00:00:00
-      When j'applique ce code promo
-      Then le code promo est refusé
-      And le message d'erreur est exactement "Ce code promo est expiré."
+  @HorlogeControlee @BorneExpiration
+  Scenario: Le code expire à la première seconde du lendemain
+    Given un code promo éligible expirant le 10 juillet 2026
+    And l'horloge métier indique le 11 juillet 2026 à 00:00:00
+    When j'applique ce code promo
+    Then le code promo est refusé
+    And le message d'erreur est exactement "Ce code promo est expiré."

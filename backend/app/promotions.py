@@ -40,8 +40,7 @@ class ExpiredPromotionError(PromotionError):
 class MinimumSubtotalError(PromotionError):
     def __init__(self, minimum_subtotal: Decimal) -> None:
         super().__init__(
-            "Ce code promo nécessite un sous-total minimum de "
-            f"{minimum_subtotal:.2f} €."
+            f"Le montant minimum de {minimum_subtotal:.2f} € n'est pas atteint"
         )
 
 
@@ -219,4 +218,3 @@ class PromotionService:
         else:
             discount = promotion.value
         return discount.quantize(CENT, rounding=ROUND_HALF_UP)
-

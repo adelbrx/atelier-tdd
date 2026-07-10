@@ -23,7 +23,7 @@ POST /api/promotions/apply
 Content-Type: application/json
 
 {
-  "subtotal": "50.00",
+  "subtotal": "40.00",
   "code": "PROM05",
   "active_code": "BIENVENUE10"
 }
@@ -31,9 +31,9 @@ Content-Type: application/json
 
 ```json
 {
-  "subtotal": "50.00",
+  "subtotal": "40.00",
   "discount": "5.00",
-  "total": "45.00",
+  "total": "35.00",
   "applied_code": "PROMO05",
   "replaced_code": "BIENVENUE10",
   "message": "Le code promo PROMO05 a remplacé le code BIENVENUE10."
@@ -54,7 +54,15 @@ microseconde du jour d'expiration incluse.
 
 ## Tests
 
+Tests backend et boucle TDD interne :
+
 ```bash
 cd backend
 pytest
+```
+
+Scénarios Gherkin de la boucle BDD externe, depuis la racine du projet :
+
+```bash
+backend/.venv/bin/python -m behave
 ```
